@@ -12,17 +12,22 @@ import (
 	"github.com/kamalshkeir/kstrct"
 )
 
+var envFile = false
+
 func Load(envFiles ...string) {
 	var wg sync.WaitGroup
 	if len(envFiles) == 0 {
 		Load(".env")
 	}
 	wg.Add(len(envFiles))
+	envFile = true
 	for _, env := range envFiles {
 		go func(env string) {
 			defer wg.Done()
+
 			f, err := os.OpenFile(env, os.O_RDONLY, os.ModePerm)
 			if err != nil {
+				envFile = false
 				fmt.Println(err)
 				return
 			}
@@ -48,6 +53,9 @@ func Load(envFiles ...string) {
 
 // FillStructFromEnv fill the struct from env
 func Fill(structure interface{}) error {
+	if !envFile {
+		fmt.Println("env: the file wasn't loaded. The environment value would be reading from os or set by default")
+	}
 	inputType := reflect.TypeOf(structure)
 	if inputType != nil {
 		if inputType.Kind() == reflect.Ptr {
@@ -84,6 +92,7 @@ func fillStructFromEnv(s reflect.Value) error {
 				kstrct.SetReflectFieldValue(s.Field(i), osv)
 			} else {
 				if !required {
+					fmt.Printf("env: %s don't set. %s will set by default \n", tag, tag)
 					kstrct.SetReflectFieldValue(s.Field(i), defau)
 				} else {
 					errored = append(errored, t)
