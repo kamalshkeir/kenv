@@ -35,13 +35,18 @@ func Load(envFiles ...string) {
 			r := bufio.NewScanner(f)
 
 			for r.Scan() {
-				sp := strings.Split(r.Text(), "=")
-				if len(sp) != 2 || r.Text()[0] == '#' {
+				if r.Text()[0] == '#' {
 					continue
 				}
-				sp[0] = strings.TrimSpace(sp[0])
-				sp[1] = strings.TrimSpace(sp[1])
-				err := os.Setenv(sp[0], sp[1])
+				
+				key, val, found := strings.Cut(r.Text(), "=")
+				if !found {
+					continue
+				}
+
+				key = strings.TrimSpace(key)
+				val = strings.TrimSpace(val)
+				err := os.Setenv(key, val)
 				if err != nil {
 					continue
 				}
